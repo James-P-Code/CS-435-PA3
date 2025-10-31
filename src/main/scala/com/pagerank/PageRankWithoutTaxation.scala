@@ -14,6 +14,8 @@ object PageRankWithoutTaxation {
 
     // generate the graph/matrix from the given input files
     val linkGraph = new LinkGraph(spark, arguments.linksFilePath, arguments.titlesFilePath)
+    // the linksRDD doesn't change but is used in every page rank iteration, so we can cache it
+    linkGraph.linksRDD.cache()
     // calculate the page rank using the graph/matrix
     var ranks = linkGraph.pageRankWithoutTaxation()
 
@@ -22,7 +24,5 @@ object PageRankWithoutTaxation {
          .sortByKey(false)
          .take(10)
          .foreach({case (pageRank, title) => println(s"$title $pageRank")})
-
-    spark.stop()
   }
 }

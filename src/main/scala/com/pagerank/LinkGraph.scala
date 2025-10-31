@@ -5,9 +5,9 @@ import org.apache.spark.rdd.RDD
 
 class LinkGraph (val spark: SparkContext,
                  val linksFilePath: String, 
-                 val titlesFilePath: String, 
-                 val subGraphQueryWord: String = "") {
+                 val titlesFilePath: String) {
     
+    // partitions is based on 4x the number of cores per worker (1 core per worker, 10 workers)
     private val PARTITIONS = 40
   
     val titlesRDD: RDD[(String, String)] =
@@ -18,8 +18,8 @@ class LinkGraph (val spark: SparkContext,
 
     val linksRDD: RDD[(String, String)] =
         spark.textFile(linksFilePath)
-             .repartition(PARTITIONS)
              .map(line => (line.split(": ")(0), line.split(":")(1)))
+             .repartition(PARTITIONS)
 
     def pageRanks: RDD[(String, Double)] = {
         val totalPages = linksRDD.count.toDouble
