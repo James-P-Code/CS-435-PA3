@@ -16,7 +16,9 @@ class ArgumentParser (val args: Array[String]) {
         if (args.length > NODE_INDEX) "spark://" + args(NODE_INDEX)
         else "local"
 
-    def outputPath : String = args(OUTPUT_INDEX)
+    def outputPath : String = 
+        if (args.length > NODE_INDEX) args(OUTPUT_INDEX)
+        else "output/"
 
     def searchWord : String =
         if (args.length > SEARCH_WORD_INDEX) args(SEARCH_WORD_INDEX)

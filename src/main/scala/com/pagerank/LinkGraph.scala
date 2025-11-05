@@ -29,12 +29,17 @@ class LinkGraph (val spark: SparkContext,
     def pageRankWithoutTaxation(iterations: Int = LinkGraph.DEFAULT_ITERATIONS): RDD[(String, Double)] = {
         LinkGraph.pageRankWithoutTaxation(linksRDD, pageRanks, iterations)
     }
+
+    def pageRankWithTaxation(iterations: Int = LinkGraph.DEFAULT_ITERATIONS): RDD[(String, Double)] = {
+        LinkGraph.pageRankWithTaxation(linksRDD, pageRanks, iterations)
+    }
 }
 
 /* this allows the pageRankWithoutTaxation() to be called like a static method which 
   can use the RDDs defined above, or take other RDDs as arguments */
 object LinkGraph {
     private val DEFAULT_ITERATIONS = 25
+    private val BETA = 0.85
 
     def pageRankWithoutTaxation(links: RDD[(String, String)], 
                             initialRanks: RDD[(String, Double)],
@@ -48,6 +53,25 @@ object LinkGraph {
                 case (rootPage, (urls, rank)) =>
                     val outLinks = urls.split(" ")
                     outLinks.map(url => (url, rank / outLinks.length))
+            }
+            ranks = iterationRank.reduceByKey(_+_)
+        }
+        ranks
+    }
+
+    def pageRankWithTaxation(links: RDD[(String, String)], 
+                            initialRanks: RDD[(String, Double)],
+                            iterations: Int = DEFAULT_ITERATIONS)
+    : RDD[(String, Double)] = {
+        
+        var ranks = initialRanks
+        var size = initialRanks.count()
+
+        for (i <- 1 to iterations) {
+            val iterationRank = links.join(ranks).flatMap {
+                case (rootPage, (urls, rank)) =>
+                    val outLinks = urls.split(" ")
+                    outLinks.map(url => (url, (rank / outLinks.length) * BETA + (1.0 - BETA) / size))
             }
             ranks = iterationRank.reduceByKey(_+_)
         }
