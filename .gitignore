@@ -3,3 +3,4 @@
 metals.*
 *.json
 *.md
+/input/
