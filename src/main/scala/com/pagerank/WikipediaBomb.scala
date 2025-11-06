@@ -1,14 +1,19 @@
 package com.pagerank
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.broadcast.Broadcast
 
+// expected command line args: <titles file> <links file> <spark master node> <output path>
 object WikipediaBomb {
+
+    var spark: SparkContext = null
+
     def main(args: Array[String]): Unit = {
         val arguments = new ArgumentParser(args)
 
-        val spark = SparkSession.builder()
+        spark = SparkSession.builder()
             .master(arguments.masterNode)
             .getOrCreate()
             .sparkContext
@@ -42,13 +47,14 @@ object WikipediaBomb {
                 (rootPage, updatedOutLinks)
             })
 
-        displayBombedPageRank(bombedLinks, linkGraph.titlesRDD, surfingIndicesSet)
+        displayBombedPageRank(bombedLinks, linkGraph.titlesRDD, surfingIndicesSet, arguments.outputPath)
     }
 
     // calculates the page rank (w/o taxation) for the sub-graph of pages with "surfing" in the title
     def displayBombedPageRank(bombedLinks: RDD[(String, String)],
                               titles: RDD[(String, String)],
-                              surfingIndices: Broadcast[Set[String]]
+                              surfingIndices: Broadcast[Set[String]],
+                              outputPath: String
     ): Unit = {
 
         val subGraph = bombedLinks.filter({case (rootPage, outLinks) => surfingIndices.value.contains(rootPage)})
@@ -57,10 +63,12 @@ object WikipediaBomb {
 
         ranks = LinkGraph.pageRankWithoutTaxation(subGraph, ranks)
 
-        ranks.join(titles)
-            .map({case (id, (pageRank, title)) => (pageRank, title)})
-            .sortByKey(false)
-            .take(10)
-            .foreach({case (pageRank, title) => println(s"$title $pageRank")})
+        val topPages = ranks.join(titles)
+                            .map({case (id, (pageRank, title)) => (pageRank, title)})
+                            .sortByKey(false)
+                            .take(10)
+                            .map({case (pageRank, title) => s"$title $pageRank"})
+
+        spark.parallelize(topPages).coalesce(1).saveAsTextFile(outputPath)
     }
 }
