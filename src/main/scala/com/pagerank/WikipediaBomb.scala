@@ -67,7 +67,7 @@ object WikipediaBomb {
                             .map({case (id, (pageRank, title)) => (pageRank, title)})
                             .sortByKey(false)
                             .take(10)
-                            .map({case (pageRank, title) => s"$title $pageRank"})
+                            .map({case (pageRank, title) => f"($title, $pageRank%.19f)"})
 
         spark.parallelize(topPages).coalesce(1).saveAsTextFile(outputPath)
     }
