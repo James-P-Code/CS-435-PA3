@@ -2,6 +2,7 @@ package com.pagerank
 
 import org.apache.spark.sql.SparkSession
 
+// expected command line args: <titles file> <links file> <spark master node> <output path>
 object PageRankWithoutTaxation {
   def main(args: Array[String]): Unit = {
 
