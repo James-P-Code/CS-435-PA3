@@ -17,8 +17,4 @@ class ArgumentParser (val args: Array[String]) {
         else "local"
 
     def outputPath : String = args(OUTPUT_INDEX)
-
-    def searchWord : String =
-        if (args.length > SEARCH_WORD_INDEX) args(SEARCH_WORD_INDEX)
-        else ""
 }

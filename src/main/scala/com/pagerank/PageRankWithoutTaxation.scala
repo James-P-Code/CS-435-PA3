@@ -2,6 +2,7 @@ package com.pagerank
 
 import org.apache.spark.sql.SparkSession
 
+// expected command line args: <titles file> <links file> <spark master node> <output path>
 object PageRankWithoutTaxation {
   def main(args: Array[String]): Unit = {
 
@@ -19,10 +20,12 @@ object PageRankWithoutTaxation {
     // calculate the page rank using the graph/matrix
     var ranks = linkGraph.pageRankWithoutTaxation()
 
-    ranks.join(linkGraph.titlesRDD)
-         .map({case (id, (pageRank, title)) => (pageRank, title)})
-         .sortByKey(false)
-         .take(10)
-         .foreach({case (pageRank, title) => println(s"$title $pageRank")})
+    val topPages = ranks.join(linkGraph.titlesRDD)
+                        .map({case (id, (pageRank, title)) => (pageRank, title)})
+                        .sortByKey(false)
+                        .take(10)
+                        .map({case (pageRank, title) => s"$title $pageRank"})
+
+    spark.parallelize(topPages).coalesce(1).saveAsTextFile(arguments.outputPath)
   }
 }
