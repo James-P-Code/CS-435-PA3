@@ -19,10 +19,12 @@ object PageRankWithTaxation {
     // calculate the page rank using the graph/matrix
     var ranks = linkGraph.pageRankWithTaxation()
 
-    ranks.join(linkGraph.titlesRDD)
-         .map({case (id, (pageRank, title)) => (pageRank, title)})
-         .sortByKey(false)
-         .take(10)
-         .foreach({case (pageRank, title) => println(s"$title $pageRank")})
+    val topPages = ranks.join(linkGraph.titlesRDD)
+                        .map({case (id, (pageRank, title)) => (pageRank, title)})
+                        .sortByKey(false)
+                        .take(10)
+                        .map({case (pageRank, title) => f"($title, $pageRank%.19f)"})
+
+    spark.parallelize(topPages).coalesce(1).saveAsTextFile(arguments.outputPath)
   }
 }

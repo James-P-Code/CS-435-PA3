@@ -57,10 +57,12 @@ object WikipediaBomb {
 
         ranks = LinkGraph.pageRankWithoutTaxation(subGraph, ranks)
 
-        ranks.join(titles)
-            .map({case (id, (pageRank, title)) => (pageRank, title)})
-            .sortByKey(false)
-            .take(10)
-            .foreach({case (pageRank, title) => println(s"$title $pageRank")})
+        val topPages = ranks.join(titles)
+                            .map({case (id, (pageRank, title)) => (pageRank, title)})
+                            .sortByKey(false)
+                            .take(10)
+                            .map({case (pageRank, title) => f"($title, $pageRank%.19f)"})
+
+        spark.parallelize(topPages).coalesce(1).saveAsTextFile(outputPath)
     }
 }
