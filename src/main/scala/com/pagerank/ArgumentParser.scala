@@ -6,7 +6,6 @@ class ArgumentParser (val args: Array[String]) {
     private val LINKS_INDEX = 1
     private val NODE_INDEX = 2
     private val OUTPUT_INDEX = 3
-    private val SEARCH_WORD_INDEX = 4
 
     def titlesFilePath : String = args(TITLES_INDEX)
 
@@ -16,5 +15,7 @@ class ArgumentParser (val args: Array[String]) {
         if (args.length > NODE_INDEX) "spark://" + args(NODE_INDEX)
         else "local"
 
-    def outputPath : String = args(OUTPUT_INDEX)
+    def outputPath : String = 
+        if (args.length > NODE_INDEX) args(OUTPUT_INDEX)
+        else "output/"
 }
